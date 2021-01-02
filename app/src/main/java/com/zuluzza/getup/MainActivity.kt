@@ -21,10 +21,23 @@ class MainActivity : WearableActivity() {
     lateinit var notificationChannel : NotificationChannel
     lateinit var builder : NotificationCompat.Builder
     private val channelId = "com.zuluzza.getup.notifications"
+    lateinit var context: Context
+    init {
+        instance = this;
+    }
+    // This is to pass around the application's context for alarm receiver
+    companion object {
+        private var instance: MainActivity? = null
+
+        fun applicationContext() : Context {
+            return instance!!.applicationContext
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        context = applicationContext()
 
         val sensorFilter = IntentFilter()
         sensorFilter.addAction("com.zuluzza.getup.StepSensor")
@@ -78,19 +91,12 @@ class MainActivity : WearableActivity() {
     }
 
     private class AlarmReceiver : BroadcastReceiver() {
-        private var mainActivity: MainActivity? = null
-
-        //TODO this need to be called somewhere to make onReceive to work properly
-        fun setContext(main: MainActivity) {
-            mainActivity = main
-        }
-
         override fun onReceive(
                 context: Context,
                 intent: Intent
         ) {
             Log.d(TAG, "AlarmReceiver got new event")
-            mainActivity?.readStepSensor()
+            (applicationContext() as MainActivity).readStepSensor()
         }
     }
 
