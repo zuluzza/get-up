@@ -18,16 +18,18 @@ class StepSensor: Service(), SensorEventListener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "StepSensor onStartCommand isListening=$isListening")
-        if (isListening) {
-            return super.onStartCommand(intent, flags, startId)
-        }
+        if (!isListening) {
+            if (mSensorManager == null) {
+                mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            }
+            if (mStepSensor == null) {
+                mStepSensor = mSensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+            }
 
-        if (mStepSensor == null) {
-            mStepSensor = mSensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+            val result = mSensorManager?.registerListener(this, mStepSensor, 0)
+            isListening = true
+            Log.d(TAG, "StepSensor registered $result")
         }
-
-        mSensorManager?.registerListener(this, mStepSensor, SensorManager.SENSOR_DELAY_NORMAL)
-        isListening = true
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -41,12 +43,14 @@ class StepSensor: Service(), SensorEventListener {
         val nextAction = stepConditionChecker.check(newStepCount)
         val sendNotification = nextAction == StepConditionChecker.status.INSUFFICIENT
 
-        val setAlarmIntent = Intent(this, MainActivity::class.java).apply {
+        val setAlarmIntent = Intent(this, SensorReceiver::class.java).apply {
             action = "com.zuluzza.getup.StepSensor"
             putExtra("setAlarm", true)
             putExtra("sendNotification", sendNotification)
         }
-        sendBroadcast(setAlarmIntent)
+        setAlarmIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+        Log.d(TAG, "Alarm intent sent with sendNotification=$sendNotification")
+        applicationContext.sendBroadcast(setAlarmIntent)
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {

@@ -5,10 +5,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity
 import android.util.Log
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 
 val TAG = "GetUpApp"
@@ -21,6 +23,8 @@ class MainActivity : WearableActivity() {
     lateinit var notificationChannel : NotificationChannel
     lateinit var builder : NotificationCompat.Builder
     private val channelId = "com.zuluzza.getup.notifications"
+    private var sensorFilter: IntentFilter? = null
+    private var sensorReceiver: SensorReceiver? = null
     lateinit var context: Context
     init {
         instance = this;
@@ -32,6 +36,14 @@ class MainActivity : WearableActivity() {
         fun applicationContext() : Context {
             return instance!!.applicationContext
         }
+
+        fun setAlarm(checkIntervalMs: Long) {
+            instance?.setAlarm(checkIntervalMs)
+        }
+
+        fun sendNotification() {
+            instance?.sendNotification()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,10 +51,10 @@ class MainActivity : WearableActivity() {
         setContentView(R.layout.activity_main)
         context = applicationContext()
 
-        val sensorFilter = IntentFilter()
-        sensorFilter.addAction("com.zuluzza.getup.StepSensor")
-        val sensorReceiver = SensorReceiver()
-        sensorReceiver.setContext(this)
+        if(sensorFilter == null) {
+            sensorFilter = IntentFilter("com.zuluzza.getup.StepSensor")
+            sensorReceiver = SensorReceiver()
+        }
         registerReceiver(sensorReceiver, sensorFilter)
 
         Log.d(TAG, "MainActivity registered receiver and going to read step sensor")
@@ -53,6 +65,11 @@ class MainActivity : WearableActivity() {
         super.onResume()
         //TODO is this necessary?
         readStepSensor()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(sensorReceiver)
     }
 
     fun setAlarm(timeInMillis: Long) {
@@ -74,6 +91,8 @@ class MainActivity : WearableActivity() {
         notificationChannel.enableLights(true)
         notificationChannel.lightColor = Color.GREEN
         notificationChannel.enableVibration(true)
+        notificationChannel.vibrationPattern = longArrayOf(100,200,100,200,100) //TODO is there a default?
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(notificationChannel)
     }
 
@@ -83,7 +102,9 @@ class MainActivity : WearableActivity() {
         builder = NotificationCompat.Builder(this, channelId)
                 .setContentTitle("Get Up!")
                 .setContentText("You have not taken as many steps as you'd wanted to. Now it's time to get up!")
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        notificationManager.notify(12345, builder.build())
     }
 
     fun readStepSensor() {
@@ -97,31 +118,6 @@ class MainActivity : WearableActivity() {
         ) {
             Log.d(TAG, "AlarmReceiver got new event")
             (applicationContext() as MainActivity).readStepSensor()
-        }
-    }
-
-    private class SensorReceiver : BroadcastReceiver() {
-        private var mainActivity: MainActivity? = null
-
-        fun setContext(main: MainActivity) {
-            mainActivity = main
-        }
-
-        override fun onReceive(context: Context?, intent: Intent?) {
-            Log.d(TAG, "SensorReceiver received intent ${intent.toString()}")
-
-            if (intent == null) {
-                Log.e(TAG, "null intent")
-                return
-            }
-            if (intent.getBooleanExtra("setAlarm", true)) {
-                Log.d(TAG, "SensorReceiver setting alarm")
-                mainActivity?.setAlarm(CHECK_INTERVAL_MS)
-            }
-            if (intent.getBooleanExtra("sendNotification",  false)) {
-                Log.d(TAG, "SensorReceiver sending notification")
-                mainActivity?.sendNotification()
-            }
         }
     }
 }
