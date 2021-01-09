@@ -44,10 +44,17 @@ class MainActivity : WearableActivity() {
         fun sendNotification() {
             instance?.sendNotification()
         }
+
+        fun readStepSensor() {
+            instance?.readStepSensor()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //stops OS from killing the process
+        sendOngoingNotification()
+
         setContentView(R.layout.activity_main)
         context = applicationContext()
 
@@ -91,33 +98,35 @@ class MainActivity : WearableActivity() {
         notificationChannel.enableLights(true)
         notificationChannel.lightColor = Color.GREEN
         notificationChannel.enableVibration(true)
-        notificationChannel.vibrationPattern = longArrayOf(100,200,100,200,100) //TODO is there a default?
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(notificationChannel)
     }
 
     fun sendNotification() {
         createNotificationChannel();
-        Log.d(TAG, "Sending notification")
+        Log.d(TAG, "Sending insufficient steps notification")
         builder = NotificationCompat.Builder(this, channelId)
                 .setContentTitle("Get Up!")
                 .setContentText("You have not taken as many steps as you'd wanted to. Now it's time to get up!")
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setVibrate(longArrayOf(100,200,100,200))
         notificationManager.notify(12345, builder.build())
+    }
+
+    fun sendOngoingNotification() {
+        createNotificationChannel();
+        Log.d(TAG, "Sending ongoing notification")
+        builder = NotificationCompat.Builder(this, channelId)
+                .setContentTitle("Get Up!")
+                .setContentText("Get up! is running and will wake you up if you are not moving as much as you wanted to!")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setOngoing(true)
+        notificationManager.notify(1, builder.build())
     }
 
     fun readStepSensor() {
         startService(Intent(this, StepSensor::class.java))
-    }
-
-    private class AlarmReceiver : BroadcastReceiver() {
-        override fun onReceive(
-                context: Context,
-                intent: Intent
-        ) {
-            Log.d(TAG, "AlarmReceiver got new event")
-            (applicationContext() as MainActivity).readStepSensor()
-        }
     }
 }

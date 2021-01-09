@@ -43,6 +43,10 @@
                 <action android:name="com.zuluzza.getup.StepSensor"/>
             </intent-filter>
         </receiver>
+
+        <receiver android:name=".AlarmReceiver"
+                  android:enabled="true">
+        </receiver>
     </application>
 
 </manifest>
