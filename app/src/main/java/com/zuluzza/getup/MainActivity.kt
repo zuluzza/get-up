@@ -1,21 +1,19 @@
 package com.zuluzza.getup
 
 import android.app.*
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.BitmapFactory
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.*
 import android.graphics.Color
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity
 import android.util.Log
-import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import java.util.concurrent.TimeUnit
 
 val TAG = "GetUpApp"
 val ALARM_REQUEST_CODE = 255
-var CHECK_INTERVAL_MS: Long = 60 * 60 * 1000
+var CHECK_INTERVAL_MS: Long = TimeUnit.MINUTES.toMillis(5)
 
 class MainActivity : WearableActivity() {
     private var mAlarmManager: AlarmManager? = null
@@ -32,6 +30,7 @@ class MainActivity : WearableActivity() {
     // This is to pass around the application's context for alarm receiver
     companion object {
         private var instance: MainActivity? = null
+        val stepConditionChecker = StepConditionChecker()
 
         fun applicationContext() : Context {
             return instance!!.applicationContext
@@ -43,10 +42,6 @@ class MainActivity : WearableActivity() {
 
         fun sendNotification() {
             instance?.sendNotification()
-        }
-
-        fun readStepSensor() {
-            instance?.readStepSensor()
         }
     }
 
@@ -65,13 +60,14 @@ class MainActivity : WearableActivity() {
         registerReceiver(sensorReceiver, sensorFilter)
 
         Log.d(TAG, "MainActivity registered receiver and going to read step sensor")
-        readStepSensor()
+        startStepSensor()
+        setAlarm(CHECK_INTERVAL_MS)
     }
 
     override fun onResume() {
         super.onResume()
         //TODO is this necessary?
-        readStepSensor()
+        startStepSensor()
     }
 
     override fun onDestroy() {
@@ -87,9 +83,10 @@ class MainActivity : WearableActivity() {
         }
         val intent = Intent(this, AlarmReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(this, ALARM_REQUEST_CODE, intent, 0)
-        Log.d(TAG, "Setting new alarm to $timeInMillis ms")
+        val alarmTime = System.currentTimeMillis() + timeInMillis
+        Log.d(TAG, "Setting new alarm to $alarmTime ($timeInMillis)")
         // TODO is RTC_WAKEUP the best option?
-        mAlarmManager!!.setExact(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
+        mAlarmManager!!.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent)
     }
 
     private fun createNotificationChannel() {
@@ -126,7 +123,10 @@ class MainActivity : WearableActivity() {
         notificationManager.notify(1, builder.build())
     }
 
-    fun readStepSensor() {
-        startService(Intent(this, StepSensor::class.java))
+    fun startStepSensor() {
+        val stepJobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        val jobInfo = JobInfo.Builder(123, ComponentName(this, StepSensor::class.java))
+        val job = jobInfo.setRequiresCharging(false).setMinimumLatency(1).setOverrideDeadline(60*1000).build()
+        stepJobScheduler.schedule(job)
     }
 }

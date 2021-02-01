@@ -1,22 +1,37 @@
 package com.zuluzza.getup
 
-import android.app.Service
+import android.app.job.JobParameters
+import android.app.job.JobService
 import android.content.Context
-import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.IBinder
 import android.util.Log
 
-class StepSensor: Service(), SensorEventListener {
+class StepSensor: JobService(), SensorEventListener {
     private var mSensorManager: SensorManager? = null
     private var mStepSensor: Sensor? = null
-    private val stepConditionChecker = StepConditionChecker()
-    private var isListening = false
+    private var receivedInitialValue = false
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    companion object {
+        private var isListening = false
+        private var mStepCount = 0
+
+        fun getStepCount(): Int {
+            return mStepCount
+        }
+    }
+
+    override fun onStopJob(params: JobParameters?): Boolean {
+        Log.d(TAG, "StepSensor onStopJob listening=$isListening")
+        if (isListening) {
+            mSensorManager?.unregisterListener(this, mStepSensor)
+        }
+        return false
+    }
+
+    override fun onStartJob(params: JobParameters?): Boolean {
         Log.d(TAG, "StepSensor onStartCommand isListening=$isListening")
         if (!isListening) {
             if (mSensorManager == null) {
@@ -30,35 +45,21 @@ class StepSensor: Service(), SensorEventListener {
             isListening = true
             Log.d(TAG, "StepSensor registered $result")
         }
-        return super.onStartCommand(intent, flags, startId)
+        return false
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
         Log.d(TAG, "StepSensor got now event ${event.toString()}")
         if (event == null) return
-
-        mSensorManager?.unregisterListener(this, mStepSensor)
-        isListening = false
-        val newStepCount = event.values[0].toInt()
-        val nextAction = stepConditionChecker.check(newStepCount)
-        val sendNotification = nextAction == StepConditionChecker.status.INSUFFICIENT
-
-        val setAlarmIntent = Intent(this, SensorReceiver::class.java).apply {
-            action = "com.zuluzza.getup.StepSensor"
-            putExtra("setAlarm", true)
-            putExtra("sendNotification", sendNotification)
+        mStepCount = event.values[0].toInt()
+        Log.d(TAG, "newStepCount=$mStepCount (initial=$receivedInitialValue")
+        if (!receivedInitialValue) {
+            MainActivity.stepConditionChecker.setInitial(mStepCount)
+            receivedInitialValue = true
         }
-        setAlarmIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-        Log.d(TAG, "Alarm intent sent with sendNotification=$sendNotification")
-        applicationContext.sendBroadcast(setAlarmIntent)
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // nothing to do
     }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        TODO("Not yet implemented")
-    }
-
 }

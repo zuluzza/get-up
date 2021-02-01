@@ -34,7 +34,8 @@
 
         <service
             android:name=".StepSensor"
-            android:label="StepSensor">
+            android:label="StepSensor"
+            android:permission="android.permission.BIND_JOB_SERVICE">
         </service>
 
         <receiver android:name=".SensorReceiver"
