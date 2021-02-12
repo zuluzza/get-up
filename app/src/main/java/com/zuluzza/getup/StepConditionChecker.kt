@@ -5,7 +5,7 @@ import android.util.Log
 class StepConditionChecker {
     private var mLastStepCount = 0
     private var mLastStepCountSet = false
-    val STEPS_TO_TAKE_IN_INTERVAL = 25 //250
+    private var intervalStepsGoal = 250
 
     enum class status {
         SUCCEEDED,
@@ -14,7 +14,7 @@ class StepConditionChecker {
 
     fun check(newStepCount: Int): status {
         Log.d(TAG, "newStepCount($newStepCount), old($mLastStepCount)")
-        if (mLastStepCount > (newStepCount - STEPS_TO_TAKE_IN_INTERVAL) && mLastStepCountSet) {
+        if (mLastStepCount > (newStepCount - intervalStepsGoal) && mLastStepCountSet) {
             //not that many steps taken, create a notification to user
             Log.d(TAG, "Step count is insufficient")
             mLastStepCount = newStepCount
@@ -34,4 +34,14 @@ class StepConditionChecker {
             mLastStepCountSet = true
         }
     }
+
+    fun setGoal(steps: Int) {
+        if (steps > 0) {
+            Log.d(TAG, "new step goal $steps")
+            intervalStepsGoal = steps
+        }
+
+    }
+
+    fun getStepGoal(): Int { return intervalStepsGoal}
 }

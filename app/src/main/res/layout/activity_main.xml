@@ -17,9 +17,36 @@
 
         <TextView
             android:id="@+id/text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="110dp"
+            android:layout_height="55dp"
             android:text="Hello! Get Up! reminders are now active!" />
 
+        <EditText
+            android:id="@+id/activePeriodStart"
+            android:layout_width="47dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:visibility="visible"
+            android:text="7"
+            android:inputType="number"/>
+        <EditText
+            android:id="@+id/activePeriodEnd"
+            android:layout_width="47dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="60dp"
+            android:layout_marginLeft="50dp"
+            android:visibility="visible"
+            android:text="20"
+            android:inputType="number"/>
+
+        <EditText
+            android:id="@+id/stepsGoal"
+            android:layout_width="47dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="120dp"
+            android:layout_marginLeft="25dp"
+            android:visibility="visible"
+            android:text="250"
+            android:inputType="number"/>
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

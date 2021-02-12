@@ -20,6 +20,6 @@ class AlarmReceiver : BroadcastReceiver() {
             Log.d(TAG, "AlarmReceiver sending insufficient step count notification")
             MainActivity.sendNotification()
         }
-        MainActivity.setAlarm(CHECK_INTERVAL_MS)
+        MainActivity.setAlarm(CHECK_INTERVAL_MIN)
     }
 }

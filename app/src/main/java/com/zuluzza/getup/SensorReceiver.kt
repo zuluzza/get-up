@@ -16,7 +16,7 @@ class SensorReceiver : BroadcastReceiver() {
         }
         if (intent.getBooleanExtra("setAlarm", true)) {
             Log.d(TAG, "SensorReceiver setting alarm")
-            MainActivity.setAlarm(CHECK_INTERVAL_MS)
+            MainActivity.setAlarm(CHECK_INTERVAL_MIN)
         }
         if (intent.getBooleanExtra("sendNotification",  false)) {
             Log.d(TAG, "SensorReceiver sending notification")
