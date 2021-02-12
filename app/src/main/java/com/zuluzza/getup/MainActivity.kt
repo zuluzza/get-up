@@ -24,7 +24,7 @@ import java.time.ZoneOffset
 
 val TAG = "GetUpApp"
 val ALARM_REQUEST_CODE = 255
-var CHECK_INTERVAL_MIN: Long = 30
+var CHECK_INTERVAL_MIN: Long = 60
 
 class MainActivity : WearableActivity() {
     private var mAlarmManager: AlarmManager? = null
