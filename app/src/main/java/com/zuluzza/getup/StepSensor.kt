@@ -8,6 +8,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
+import java.util.concurrent.TimeUnit
 
 class StepSensor: JobService(), SensorEventListener {
     private var mSensorManager: SensorManager? = null
@@ -41,7 +42,7 @@ class StepSensor: JobService(), SensorEventListener {
                 mStepSensor = mSensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             }
 
-            val result = mSensorManager?.registerListener(this, mStepSensor, 0)
+            val result = mSensorManager?.registerListener(this, mStepSensor, SensorManager.SENSOR_DELAY_NORMAL, TimeUnit.SECONDS.toMicros(10).toInt())
             isListening = true
             Log.d(TAG, "StepSensor registered $result")
         }

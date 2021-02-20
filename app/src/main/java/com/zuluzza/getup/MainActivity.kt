@@ -154,7 +154,7 @@ class MainActivity : WearableActivity() {
         val alarmTime = calculateNextAlarmTime(timeInMinutes)
         Log.d(TAG, "Setting new alarm to $alarmTime ($timeInMinutes)")
         // TODO is RTC_WAKEUP the best option?
-        mAlarmManager!!.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent)
+        mAlarmManager!!.set(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent)
     }
 
     private fun createNotificationChannel() {
