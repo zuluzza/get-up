@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 
-//TODO remoce as it's not needed anymore
 class SensorReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         Log.d(TAG, "SensorReceiver received intent ${intent.toString()}")

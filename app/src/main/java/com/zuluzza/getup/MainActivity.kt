@@ -11,6 +11,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity
 import android.text.Editable
@@ -34,6 +36,7 @@ class MainActivity : WearableActivity() {
     private val channelId = "com.zuluzza.getup.notifications"
     private var sensorFilter: IntentFilter? = null
     private var sensorReceiver: SensorReceiver? = null
+    private val mStepSensor = StepSensor()
     private var startOfActivePeriod = 7
     private var endOfActivePeriod = 20
 
@@ -197,10 +200,11 @@ class MainActivity : WearableActivity() {
     }
 
     fun startStepSensor() {
-        val stepJobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        val jobInfo = JobInfo.Builder(123, ComponentName(this, StepSensor::class.java))
-        val job = jobInfo.setRequiresCharging(false).setMinimumLatency(1).setOverrideDeadline(60*1000).build()
-        stepJobScheduler.schedule(job)
+        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+        stepCounterSensor?.let {
+            sensorManager.registerListener(mStepSensor, it, SensorManager.SENSOR_DELAY_FASTEST)
+        }
     }
 
     fun setActivePeriod(start: Int, end: Int) {
