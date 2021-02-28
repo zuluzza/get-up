@@ -130,11 +130,6 @@ class MainActivity : WearableActivity() {
         startStepSensor()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(sensorReceiver)
-    }
-
     private fun calculateNextAlarmTime(intervalMinutes: Long): Long {
         val now = LocalDateTime.now()
         var temp = now.withHour(startOfActivePeriod).withMinute(0).withSecond(0)
