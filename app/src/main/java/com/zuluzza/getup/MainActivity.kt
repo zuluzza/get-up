@@ -169,7 +169,14 @@ class MainActivity : WearableActivity() {
     fun sendNotification() {
         val now = LocalDateTime.now()
         // do not send notifications outside of active time
-        if (now.hour < startOfActivePeriod || (now.hour == startOfActivePeriod && now.minute < 15)) return
+        if (now < LocalDateTime.now()
+                        .withHour(startOfActivePeriod)
+                        .withMinute(0)
+                        .withSecond(0)
+                        .withNano(0)
+                        .plusMinutes(CHECK_INTERVAL_MIN - 1)) {
+                            return
+        }
         if (now.hour > endOfActivePeriod || (now.hour == endOfActivePeriod && now.minute > 5)) return
 
         createNotificationChannel();
