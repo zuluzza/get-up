@@ -2,9 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.zuluzza.getup">
 
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-
     <uses-feature android:name="android.hardware.type.watch" />
+
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
         android:allowBackup="true"
@@ -34,9 +35,7 @@
 
         <service
             android:name=".StepSensor"
-            android:label="StepSensor"
-            android:permission="android.permission.BIND_JOB_SERVICE">
-        </service>
+            android:enabled="true"/>
 
         <receiver android:name=".SensorReceiver"
                   android:enabled="true">
@@ -47,6 +46,14 @@
 
         <receiver android:name=".AlarmReceiver"
                   android:enabled="true">
+        </receiver>
+
+        <receiver android:name=".AutoStart"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
         </receiver>
     </application>
 

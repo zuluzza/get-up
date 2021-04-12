@@ -4,9 +4,6 @@ import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -21,8 +18,10 @@ import android.util.Log
 import android.view.View
 import android.widget.EditText
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+
 
 val TAG = "GetUpApp"
 val ALARM_REQUEST_CODE = 255
@@ -31,12 +30,10 @@ var CHECK_INTERVAL_MIN: Long = 60
 class MainActivity : WearableActivity() {
     private var mAlarmManager: AlarmManager? = null
     lateinit var notificationManager : NotificationManager
-    lateinit var notificationChannel : NotificationChannel
     lateinit var builder : NotificationCompat.Builder
     private val channelId = "com.zuluzza.getup.notifications"
     private var sensorFilter: IntentFilter? = null
     private var sensorReceiver: SensorReceiver? = null
-    private val mStepSensor = StepSensor()
     private var startOfActivePeriod = 7
     private var endOfActivePeriod = 20
 
@@ -48,6 +45,7 @@ class MainActivity : WearableActivity() {
     companion object {
         private var instance: MainActivity? = null
         val stepConditionChecker = StepConditionChecker()
+        lateinit var notificationChannel : NotificationChannel
 
         fun applicationContext() : Context {
             return instance!!.applicationContext
@@ -59,6 +57,10 @@ class MainActivity : WearableActivity() {
 
         fun sendNotification() {
             instance?.sendNotification()
+        }
+
+        fun getAppsNotificationChannel(): NotificationChannel {
+            return notificationChannel
         }
     }
 
@@ -95,8 +97,9 @@ class MainActivity : WearableActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //stops OS from killing the process
-        sendOngoingNotification()
+
+        val serviceIntent = Intent(this, StepSensor::class.java)
+        ContextCompat.startForegroundService(this, serviceIntent)
 
         setContentView(R.layout.activity_main)
         context = applicationContext()
@@ -120,14 +123,12 @@ class MainActivity : WearableActivity() {
         registerReceiver(sensorReceiver, sensorFilter)
 
         Log.d(TAG, "MainActivity registered receiver and going to read step sensor")
-        startStepSensor()
         setAlarm(CHECK_INTERVAL_MIN)
     }
 
     override fun onResume() {
+        Log.d(TAG, "MainActivity onResume called")
         super.onResume()
-        //TODO is this necessary?
-        startStepSensor()
     }
 
     private fun calculateNextAlarmTime(intervalMinutes: Long): Long {
@@ -180,26 +181,6 @@ class MainActivity : WearableActivity() {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setVibrate(longArrayOf(100,200,100,200))
         notificationManager.notify(12345, builder.build())
-    }
-
-    fun sendOngoingNotification() {
-        createNotificationChannel();
-        Log.d(TAG, "Sending ongoing notification")
-        builder = NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Get Up!")
-                .setContentText("Get up! is running and will wake you up if you are not moving as much as you wanted to!")
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setOngoing(true)
-        notificationManager.notify(1, builder.build())
-    }
-
-    fun startStepSensor() {
-        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-        stepCounterSensor?.let {
-            sensorManager.registerListener(mStepSensor, it, SensorManager.SENSOR_DELAY_FASTEST)
-        }
     }
 
     fun setActivePeriod(start: Int, end: Int) {
